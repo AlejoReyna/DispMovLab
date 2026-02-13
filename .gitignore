@@ -1,0 +1,18 @@
+# Gradle
+.gradle/
+build/
+*/build/
+
+# Android
+local.properties
+*.iml
+.idea/
+captures/
+
+# Firebase
+app/google-services.json
+firebase/functions/lib/
+firebase/functions/node_modules/
+
+# OS
+.DS_Store
