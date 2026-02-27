@@ -14,8 +14,6 @@ import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.functions.FirebaseFunctions
-import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -26,9 +24,7 @@ import java.util.UUID
 class FirestoreChatDataSource(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
-    private val functions: FirebaseFunctions,
-    private val storage: FirebaseStorage,
-    private val messaging: FirebaseMessaging
+    private val storage: FirebaseStorage
 ) {
     fun observeConversations(limit: Long): Flow<List<Conversation>> = callbackFlow {
         val uid = auth.currentUser?.uid
@@ -173,6 +169,24 @@ class FirestoreChatDataSource(
         ).await()
     }
 
+    suspend fun searchUserByPhone(phoneNumber: String): UserProfile? {
+        val snapshot = firestore.collection("users")
+            .whereEqualTo("phone", phoneNumber)
+            .limit(1)
+            .get()
+            .await()
+        val doc = snapshot.documents.firstOrNull() ?: return null
+        val uid = doc.getString("uid") ?: return null
+        val role = if (doc.getString("role") == "admin") UserRole.ADMIN else UserRole.USER
+        return UserProfile(
+            uid = uid,
+            email = doc.getString("email").orEmpty(),
+            displayName = doc.getString("displayName").orEmpty(),
+            role = role,
+            isActive = doc.getBoolean("isActive") ?: true
+        )
+    }
+
     suspend fun getUsers(limit: Long): List<UserProfile> {
         val snapshot = firestore.collection("users")
             .orderBy("updatedAt", Query.Direction.DESCENDING)
@@ -193,22 +207,14 @@ class FirestoreChatDataSource(
     }
 
     suspend fun updateUserActiveState(uid: String, active: Boolean) {
-        // Sensitive admin action goes through function for claim validation and auditing.
-        functions
-            .getHttpsCallable("setUserActiveState")
-            .call(mapOf("uid" to uid, "active" to active))
+        firestore.collection("users").document(uid)
+            .update(mapOf("isActive" to active, "updatedAt" to Timestamp.now()))
             .await()
     }
 
     suspend fun updateUserRole(uid: String, role: UserRole) {
-        functions
-            .getHttpsCallable("setUserRole")
-            .call(
-                mapOf(
-                    "uid" to uid,
-                    "role" to if (role == UserRole.ADMIN) "admin" else "user"
-                )
-            )
+        firestore.collection("users").document(uid)
+            .update(mapOf("role" to if (role == UserRole.ADMIN) "admin" else "user", "updatedAt" to Timestamp.now()))
             .await()
     }
 

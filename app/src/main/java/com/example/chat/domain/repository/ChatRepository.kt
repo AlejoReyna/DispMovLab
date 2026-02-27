@@ -13,6 +13,7 @@ interface ChatRepository {
     suspend fun sendMessage(conversationId: String, text: String): Result<Unit>
     suspend fun createDirectConversation(otherUid: String): Result<String>
     suspend fun markAsRead(conversationId: String, messageId: String): Result<Unit>
+    suspend fun searchUserByPhone(phoneNumber: String): Result<UserProfile?>
     suspend fun getUsers(limit: Long = 50): Result<List<UserProfile>>
     suspend fun updateUserActiveState(uid: String, active: Boolean): Result<Unit>
     suspend fun updateUserRole(uid: String, role: UserRole): Result<Unit>

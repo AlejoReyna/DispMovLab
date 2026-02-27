@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DispMov Chat</string>
+
+    <!-- Auth screen -->
+    <string name="auth_tab_login">Sign In</string>
+    <string name="auth_tab_register">Create Account</string>
+    <string name="label_name">Name</string>
+    <string name="label_email">Email</string>
+    <string name="label_password">Password</string>
+    <string name="label_confirm_password">Confirm Password</string>
+    <string name="btn_sign_in">Sign In</string>
+    <string name="btn_sign_up">Create Account</string>
+    <string name="show_password">Show password</string>
+    <string name="hide_password">Hide password</string>
+
+    <!-- Phone registration (WhatsApp-style) -->
+    <string name="label_phone">Phone number</string>
+    <string name="label_phone_hint">With country code, e.g. +15551234567</string>
+    <string name="label_sms_code">SMS verification code</string>
+    <string name="label_sms_code_hint">6-digit code</string>
+    <string name="btn_send_code">Send code</string>
+    <string name="btn_verify_code">Verify code</string>
+    <string name="btn_complete_registration">Complete registration</string>
+    <string name="btn_next">Next</string>
+    <string name="btn_back_to_phone">Change number</string>
+    <string name="phone_step_title_phone">Enter your phone number</string>
+    <string name="phone_step_title_otp">Verification code</string>
+    <string name="phone_step_title_profile">Complete your profile</string>
+    <string name="phone_step_desc_otp">We sent an SMS code to %s</string>
+    <string name="phone_step_desc_profile">Phone verified. Link an email to sign in later.</string>
+
+    <!-- Auth errors -->
+    <string name="error_invalid_credentials">Invalid credentials</string>
+    <string name="error_invalid_register_data">Invalid registration data</string>
+    <string name="error_passwords_dont_match">Passwords do not match</string>
+    <string name="error_invalid_phone">Invalid phone number. Include the country code (e.g. +1)</string>
+    <string name="error_invalid_otp">The code must be 6 digits</string>
+    <string name="error_generic">An unexpected error occurred</string>
+
+    <!-- Email verification -->
+    <string name="email_verification_title">Verify your email</string>
+    <string name="email_verification_message">We sent a verification email to %s. Please check your inbox and click the link.</string>
+    <string name="btn_resend_email">Resend email</string>
+    <string name="btn_check_verification">I\'ve verified my email</string>
+    <string name="email_verification_sent">Email resent</string>
+
+    <!-- Conversations -->
+    <string name="screen_conversations">Conversations</string>
+    <string name="btn_sign_out">Sign Out</string>
+    <string name="btn_admin">Admin</string>
+    <string name="no_title">No title</string>
+    <string name="no_last_message">No messages</string>
+    <string name="btn_new_chat">New chat</string>
+
+    <!-- User picker -->
+    <string name="screen_select_user">Select user</string>
+    <string name="label_search_users">Search user…</string>
+
+    <!-- Chat room -->
+    <string name="hint_message">Type a message…</string>
+    <string name="btn_send">Send</string>
+    <string name="btn_video_call">Video Call</string>
+    <string name="btn_back">Back</string>
+
+    <!-- Roles -->
+    <string name="role_admin">Administrator</string>
+    <string name="role_user">User</string>
+    <string name="label_active">Active</string>
+    <string name="label_inactive">Inactive</string>
+    <string name="screen_admin">Administration</string>
+
+    <!-- Video call -->
+    <string name="screen_video_call">Video Call</string>
+    <string name="video_call_connecting">Connecting…</string>
+    <string name="video_call_waiting">Waiting for participant…</string>
+    <string name="btn_end_call">End call</string>
+    <string name="btn_mute_audio">Mute microphone</string>
+    <string name="btn_unmute_audio">Unmute microphone</string>
+    <string name="btn_mute_video">Turn off camera</string>
+    <string name="btn_unmute_video">Turn on camera</string>
+    <string name="error_agora_not_configured">Video call App ID not configured. See setup guide.</string>
+    <string name="error_permissions_denied">Camera and microphone permissions are required for video calls.</string>
+
+    <!-- Language -->
+    <string name="btn_language">Language</string>
+    <string name="lang_es">Español</string>
+    <string name="lang_en">English</string>
+    <string name="dialog_select_language">Select language</string>
+    <string name="btn_cancel">Cancel</string>
+</resources>

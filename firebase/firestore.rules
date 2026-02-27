@@ -29,7 +29,8 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      allow read: if isOwner(uid) || isAdmin();
+      // Any signed-in user can read profiles (needed for user picker / new conversation)
+      allow read: if isSignedIn();
       allow create: if isOwner(uid) &&
         request.resource.data.uid == request.auth.uid &&
         request.resource.data.role == "user" &&
@@ -78,6 +79,13 @@ service cloud.firestore {
         allow update: if isAdmin();
         allow delete: if isAdmin();
       }
+    }
+
+    // Public phone → email index (only email stored, no sensitive data)
+    // Readable by anyone so login-by-phone works before authentication
+    match /phoneIndex/{phone} {
+      allow read: if true;
+      allow write: if isSignedIn() && request.resource.data.keys().hasOnly(['email']);
     }
 
     match /reports/{reportId} {

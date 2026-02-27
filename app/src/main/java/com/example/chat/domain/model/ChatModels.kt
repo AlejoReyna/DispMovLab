@@ -5,7 +5,8 @@ data class UserProfile(
     val email: String,
     val displayName: String,
     val role: UserRole = UserRole.USER,
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val isEmailVerified: Boolean = false
 )
 
 enum class UserRole {

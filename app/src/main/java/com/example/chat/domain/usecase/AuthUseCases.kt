@@ -15,3 +15,11 @@ class SignUpUseCase(private val repository: AuthRepository) {
 class SignOutUseCase(private val repository: AuthRepository) {
     suspend operator fun invoke() = repository.signOut()
 }
+
+class ResendEmailVerificationUseCase(private val repository: AuthRepository) {
+    suspend operator fun invoke(): Result<Unit> = repository.resendEmailVerification()
+}
+
+class ReloadUserUseCase(private val repository: AuthRepository) {
+    suspend operator fun invoke(): Result<Unit> = repository.reloadUser()
+}

@@ -1,4 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DispMov Chat</string>
+
+    <!-- Auth screen -->
+    <string name="auth_tab_login">Iniciar sesión</string>
+    <string name="auth_tab_register">Crear cuenta</string>
+    <string name="label_name">Nombre</string>
+    <string name="label_email">Correo electrónico</string>
+    <string name="label_password">Contraseña</string>
+    <string name="label_confirm_password">Confirmar contraseña</string>
+    <string name="btn_sign_in">Iniciar sesión</string>
+    <string name="btn_sign_up">Crear cuenta</string>
+    <string name="show_password">Mostrar contraseña</string>
+    <string name="hide_password">Ocultar contraseña</string>
+
+    <!-- Phone registration (WhatsApp-style) -->
+    <string name="label_phone">Número de teléfono</string>
+    <string name="label_phone_hint">Con código de país, ej. +521234567890</string>
+    <string name="label_sms_code">Código de verificación SMS</string>
+    <string name="label_sms_code_hint">Código de 6 dígitos</string>
+    <string name="btn_send_code">Enviar código</string>
+    <string name="btn_verify_code">Verificar código</string>
+    <string name="btn_complete_registration">Completar registro</string>
+    <string name="btn_next">Siguiente</string>
+    <string name="btn_back_to_phone">Cambiar número</string>
+    <string name="phone_step_title_phone">Ingresa tu número de teléfono</string>
+    <string name="phone_step_title_otp">Código de verificación</string>
+    <string name="phone_step_title_profile">Completa tu perfil</string>
+    <string name="phone_step_desc_otp">Enviamos un código SMS a %s</string>
+    <string name="phone_step_desc_profile">Teléfono verificado. Asocia un correo para poder iniciar sesión.</string>
+
+    <!-- Auth errors -->
+    <string name="error_invalid_credentials">Credenciales no válidas</string>
+    <string name="error_invalid_register_data">Datos de registro no válidos</string>
+    <string name="error_passwords_dont_match">Las contraseñas no coinciden</string>
+    <string name="error_invalid_phone">Número de teléfono no válido. Incluye el código de país (ej. +52)</string>
+    <string name="error_invalid_otp">El código debe tener 6 dígitos</string>
+    <string name="error_generic">Ocurrió un error inesperado</string>
+
+    <!-- Email verification -->
+    <string name="email_verification_title">Verifica tu correo</string>
+    <string name="email_verification_message">Hemos enviado un correo de verificación a %s. Revisa tu bandeja de entrada y haz clic en el enlace.</string>
+    <string name="btn_resend_email">Reenviar correo</string>
+    <string name="btn_check_verification">Ya verifiqué mi correo</string>
+    <string name="email_verification_sent">Correo reenviado</string>
+
+    <!-- Conversations -->
+    <string name="screen_conversations">Conversaciones</string>
+    <string name="btn_sign_out">Cerrar sesión</string>
+    <string name="btn_admin">Admin</string>
+    <string name="no_title">Sin título</string>
+    <string name="no_last_message">Sin mensajes</string>
+    <string name="btn_new_chat">Nuevo chat</string>
+
+    <!-- User picker -->
+    <string name="screen_select_user">Seleccionar usuario</string>
+    <string name="label_search_users">Buscar usuario…</string>
+
+    <!-- Chat room -->
+    <string name="hint_message">Escribe un mensaje…</string>
+    <string name="btn_send">Enviar</string>
+    <string name="btn_video_call">Videollamada</string>
+    <string name="btn_back">Volver</string>
+
+    <!-- Roles -->
+    <string name="role_admin">Administrador</string>
+    <string name="role_user">Usuario</string>
+    <string name="label_active">Activo</string>
+    <string name="label_inactive">Inactivo</string>
+    <string name="screen_admin">Administración</string>
+
+    <!-- Video call -->
+    <string name="screen_video_call">Videollamada</string>
+    <string name="video_call_connecting">Conectando…</string>
+    <string name="video_call_waiting">Esperando al participante…</string>
+    <string name="btn_end_call">Finalizar llamada</string>
+    <string name="btn_mute_audio">Silenciar micrófono</string>
+    <string name="btn_unmute_audio">Activar micrófono</string>
+    <string name="btn_mute_video">Apagar cámara</string>
+    <string name="btn_unmute_video">Encender cámara</string>
+    <string name="error_agora_not_configured">App ID de videollamadas no configurado. Consulta la guía de configuración.</string>
+    <string name="error_permissions_denied">Se requieren permisos de cámara y micrófono para la videollamada.</string>
+
+    <!-- Language -->
+    <string name="btn_language">Idioma</string>
+    <string name="lang_es">Español</string>
+    <string name="lang_en">English</string>
+    <string name="dialog_select_language">Seleccionar idioma</string>
+    <string name="btn_cancel">Cancelar</string>
 </resources>

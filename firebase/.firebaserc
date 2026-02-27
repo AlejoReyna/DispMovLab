@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "replace-with-your-firebase-project-id"
-  }
+    "default": "replace-with-your-firebase-project-id",
+    "dispmov": "dispmov-76016"
+  },
+  "targets": {},
+  "etags": {}
 }

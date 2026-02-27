@@ -30,6 +30,10 @@ class ChatRepositoryImpl(
         dataSource.markAsRead(conversationId, messageId)
     }
 
+    override suspend fun searchUserByPhone(phoneNumber: String): Result<UserProfile?> = runCatching {
+        dataSource.searchUserByPhone(phoneNumber)
+    }
+
     override suspend fun getUsers(limit: Long): Result<List<UserProfile>> = runCatching {
         dataSource.getUsers(limit)
     }
