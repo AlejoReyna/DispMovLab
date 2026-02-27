@@ -8,7 +8,7 @@
     <!-- Notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Video call (Agora) -->
+    <!-- Video call (WebRTC) -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
@@ -23,6 +23,7 @@
         android:allowBackup="true"
         android:label="DispMov Chat"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.DispMovChat">
         <activity
             android:name=".MainActivity"

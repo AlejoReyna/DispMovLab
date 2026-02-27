@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -117,45 +118,56 @@ fun UserPickerScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Result
-            when {
-                state.notFound -> {
-                    Text(
-                        text = "No se encontró ningún usuario con ese número.",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                state.error != null -> {
-                    Text(
-                        text = state.error,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                state.searchResult != null -> {
-                    HorizontalDivider()
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onUserSelected(state.searchResult) }
-                            .padding(vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = state.searchResult.displayName.ifBlank { state.searchResult.email },
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Text(
-                                text = phoneInput,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+            // "Not found" message
+            if (state.notFound) {
+                Text(
+                    text = "No se encontró ningún usuario con ese número.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            // Search result row — shown even when there is an error so the user can retry
+            if (state.searchResult != null) {
+                HorizontalDivider()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = !state.loading) { onUserSelected(state.searchResult) }
+                        .padding(vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = state.searchResult.displayName.ifBlank { state.searchResult.email },
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = phoneInput,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
-                    HorizontalDivider()
+                    if (state.loading) {
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .size(20.dp)
+                        )
+                    }
                 }
+                HorizontalDivider()
+            }
+
+            // Error from search or from conversation creation — shown below the result
+            if (state.error != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = state.error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }

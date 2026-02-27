@@ -26,6 +26,10 @@ class ChatRepositoryImpl(
         dataSource.createDirectConversation(otherUid)
     }
 
+    override suspend fun getConversationTitle(conversationId: String): Result<String> = runCatching {
+        dataSource.getConversationTitle(conversationId)
+    }
+
     override suspend fun markAsRead(conversationId: String, messageId: String): Result<Unit> = runCatching {
         dataSource.markAsRead(conversationId, messageId)
     }

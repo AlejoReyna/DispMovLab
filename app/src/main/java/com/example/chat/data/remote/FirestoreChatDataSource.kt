@@ -41,9 +41,13 @@ class FirestoreChatDataSource(
             .addSnapshotListener { snapshot, _ ->
                 val items = snapshot?.documents.orEmpty().mapNotNull { doc ->
                     val type = if (doc.getString("type") == "group") ConversationType.GROUP else ConversationType.DIRECT
+                    // Per-user title map: { uid → name that uid sees }
+                    @Suppress("UNCHECKED_CAST")
+                    val titlesMap = doc.get("titles") as? Map<String, String>
+                    val title = titlesMap?.get(uid) ?: doc.getString("title").orEmpty()
                     Conversation(
                         id = doc.id,
-                        title = doc.getString("title").orEmpty(),
+                        title = title,
                         type = type,
                         lastMessagePreview = doc.getString("lastMessagePreview"),
                         updatedAtMillis = doc.getTimestamp("updatedAt")?.toDate()?.time ?: 0L
@@ -113,21 +117,40 @@ class FirestoreChatDataSource(
 
     suspend fun createDirectConversation(otherUid: String): String {
         val uid = auth.currentUser?.uid ?: throw IllegalStateException("Not authenticated")
+
+        // Query with BOTH participantIds (array-contains) AND participantKey so that:
+        //  a) Firestore security rules are satisfied — the list rule requires
+        //     request.auth.uid in resource.data.participantIds, and whereArrayContains
+        //     guarantees exactly that for every returned document.
+        //  b) The composite index (participantIds CONTAINS + participantKey ASC) handles
+        //     the query efficiently.
+        val participantKey = listOf(uid, otherUid).sorted().joinToString("_")
         val existing = firestore.collection("conversations")
-            .whereEqualTo("type", "direct")
-            .whereEqualTo("participantKey", listOf(uid, otherUid).sorted().joinToString("_"))
+            .whereArrayContains("participantIds", uid)
+            .whereEqualTo("participantKey", participantKey)
             .limit(1)
             .get()
             .await()
         if (!existing.isEmpty) return existing.documents.first().id
 
+        // Use document-ID lookups (no index required) to get display names.
+        val myDoc = firestore.collection("users").document(uid).get().await()
+        val myName = myDoc.getString("displayName")?.takeIf { it.isNotBlank() }
+            ?: myDoc.getString("email").orEmpty()
+
+        val otherDoc = firestore.collection("users").document(otherUid).get().await()
+        val otherName = otherDoc.getString("displayName")?.takeIf { it.isNotBlank() }
+            ?: otherDoc.getString("email").orEmpty()
+
         val ref = firestore.collection("conversations").document()
         val now = Timestamp.now()
-        val participantKey = listOf(uid, otherUid).sorted().joinToString("_")
         ref.set(
             mapOf(
                 "type" to "direct",
-                "title" to "Direct chat",
+                // Legacy title for backwards compatibility
+                "title" to otherName.ifBlank { "Direct chat" },
+                // Per-user titles: each participant sees the OTHER person's name
+                "titles" to mapOf(uid to otherName.ifBlank { "Chat" }, otherUid to myName.ifBlank { "Chat" }),
                 "participantIds" to listOf(uid, otherUid),
                 "participantKey" to participantKey,
                 "lastMessagePreview" to "",
@@ -153,6 +176,16 @@ class FirestoreChatDataSource(
             )
         ).await()
         return ref.id
+    }
+
+    /** Returns the title this user should see for the given conversation. */
+    suspend fun getConversationTitle(conversationId: String): String {
+        val uid = auth.currentUser?.uid.orEmpty()
+        val doc = firestore.collection("conversations").document(conversationId).get().await()
+        @Suppress("UNCHECKED_CAST")
+        val titlesMap = doc.get("titles") as? Map<String, String>
+        return titlesMap?.get(uid)
+            ?: doc.getString("title").orEmpty()
     }
 
     suspend fun markAsRead(conversationId: String, messageId: String) {
@@ -182,6 +215,7 @@ class FirestoreChatDataSource(
             uid = uid,
             email = doc.getString("email").orEmpty(),
             displayName = doc.getString("displayName").orEmpty(),
+            phone = doc.getString("phone").orEmpty(),
             role = role,
             isActive = doc.getBoolean("isActive") ?: true
         )
@@ -200,6 +234,7 @@ class FirestoreChatDataSource(
                 uid = uid,
                 email = doc.getString("email").orEmpty(),
                 displayName = doc.getString("displayName").orEmpty(),
+                phone = doc.getString("phone").orEmpty(),
                 role = role,
                 isActive = doc.getBoolean("isActive") ?: true
             )

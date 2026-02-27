@@ -12,6 +12,7 @@ interface ChatRepository {
     fun observeMessages(conversationId: String, limit: Long = 50): Flow<List<Message>>
     suspend fun sendMessage(conversationId: String, text: String): Result<Unit>
     suspend fun createDirectConversation(otherUid: String): Result<String>
+    suspend fun getConversationTitle(conversationId: String): Result<String>
     suspend fun markAsRead(conversationId: String, messageId: String): Result<Unit>
     suspend fun searchUserByPhone(phoneNumber: String): Result<UserProfile?>
     suspend fun getUsers(limit: Long = 50): Result<List<UserProfile>>

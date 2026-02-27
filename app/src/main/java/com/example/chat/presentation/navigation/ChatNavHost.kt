@@ -171,11 +171,10 @@ fun ChatNavHost() {
                 viewModel(factory = VideoCallViewModelFactory(conversationId))
             val state by vm.uiState.collectAsStateCompat()
             VideoCallScreen(
-                channelId = conversationId,
                 uiState = state,
-                onInitAndJoin = { vm.initAndJoin(navController.context) },
-                onSetupLocalVideo = vm::setupLocalVideo,
-                onSetupRemoteVideo = vm::setupRemoteVideo,
+                onInitAndStart = { localRenderer, remoteRenderer ->
+                    vm.initAndStart(navController.context, localRenderer, remoteRenderer)
+                },
                 onToggleAudio = vm::toggleAudio,
                 onToggleVideo = vm::toggleVideo,
                 onLeaveCall = vm::leaveCall,

@@ -79,7 +79,17 @@ class ConversationsViewModel : ViewModel() {
     }
 
     suspend fun createOrOpenConversation(otherUid: String): String? {
+        _pickerState.update { it.copy(loading = true, error = null) }
         val result = chatRepository.createDirectConversation(otherUid)
-        return result.getOrNull()
+        return result.fold(
+            onSuccess = { convId ->
+                _pickerState.update { it.copy(loading = false) }
+                convId
+            },
+            onFailure = { e ->
+                _pickerState.update { it.copy(loading = false, error = e.message ?: "Error al abrir conversación") }
+                null
+            }
+        )
     }
 }

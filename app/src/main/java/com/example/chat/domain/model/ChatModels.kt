@@ -4,6 +4,7 @@ data class UserProfile(
     val uid: String,
     val email: String,
     val displayName: String,
+    val phone: String = "",
     val role: UserRole = UserRole.USER,
     val isActive: Boolean = true,
     val isEmailVerified: Boolean = false

@@ -21,6 +21,8 @@ data class ChatRoomUiState(
     val currentUserUid: String = "",
     /** True if the current user is an admin (can see moderation actions) */
     val isAdmin: Boolean = false,
+    /** Title shown in the TopAppBar — the other participant's name for 1-to-1 chats */
+    val conversationTitle: String = "",
     val sending: Boolean = false,
     val error: String? = null
 )
@@ -42,6 +44,12 @@ class ChatRoomViewModel(private val conversationId: String) : ViewModel() {
                         isAdmin = profile?.role == UserRole.ADMIN
                     )
                 }
+            }
+        }
+        // Load the per-user conversation title (e.g. the other person's name)
+        viewModelScope.launch {
+            chatRepository.getConversationTitle(conversationId).getOrNull()?.let { title ->
+                _uiState.update { it.copy(conversationTitle = title) }
             }
         }
         // Observe messages in real-time

@@ -2,6 +2,9 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ── Helper functions ──────────────────────────────────────────────────────
+
     function isSignedIn() {
       return request.auth != null;
     }
@@ -23,30 +26,52 @@ service cloud.firestore {
       return isAdminByClaim() || isAdminByProfile();
     }
 
-    function isConversationParticipant(conversationId) {
+    // Returns true if the current user is listed in the conversation's
+    // participantIds array (stored on the conversation document itself).
+    // Using the array avoids the chicken-and-egg problem of checking a
+    // subcollection that doesn't exist yet when the conversation is first created.
+    function isParticipantOf(conversationId) {
       return isSignedIn() &&
-        exists(/databases/$(database)/documents/conversations/$(conversationId)/participants/$(request.auth.uid));
+        request.auth.uid in
+          get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
     }
 
+    // ── Users ─────────────────────────────────────────────────────────────────
+
     match /users/{uid} {
-      // Any signed-in user can read profiles (needed for user picker / new conversation)
+      // Any signed-in user can read profiles (needed for user picker / new chat).
       allow read: if isSignedIn();
+
       allow create: if isOwner(uid) &&
         request.resource.data.uid == request.auth.uid &&
         request.resource.data.role == "user" &&
         request.resource.data.isActive == true;
 
-      // End users can only update profile fields, never role flags.
+      // End users may update their own profile fields but never change role/active.
       allow update: if isOwner(uid) &&
         request.resource.data.uid == resource.data.uid &&
         request.resource.data.role == resource.data.role &&
         request.resource.data.isActive == resource.data.isActive;
 
+      // Admins may update or delete any user (e.g. changing role or active status).
       allow update, delete: if isAdmin();
     }
 
+    // ── Conversations ─────────────────────────────────────────────────────────
+
     match /conversations/{conversationId} {
-      allow read: if isConversationParticipant(conversationId) || isAdmin();
+
+      // LIST (query): the participantIds array on each document is checked.
+      // This works with .whereArrayContains("participantIds", uid) queries.
+      allow list: if isSignedIn() &&
+        request.auth.uid in resource.data.participantIds;
+
+      // GET (single-document fetch): same check or admin.
+      allow get: if isSignedIn() && (
+        request.auth.uid in resource.data.participantIds || isAdmin()
+      );
+
+      // CREATE: the creator must be in the new participantIds list.
       allow create: if isSignedIn() &&
         request.resource.data.type in ["direct", "group"] &&
         request.resource.data.participantIds is list &&
@@ -54,42 +79,80 @@ service cloud.firestore {
         request.resource.data.participantIds.size() >= 2 &&
         request.resource.data.participantIds.size() <= 100;
 
-      // Participants can update lightweight metadata only.
-      allow update: if isConversationParticipant(conversationId) &&
+      // UPDATE: participants may update metadata (e.g. lastMessagePreview) but
+      // cannot change participant list or conversation type.
+      allow update: if isSignedIn() &&
+        request.auth.uid in resource.data.participantIds &&
         request.resource.data.participantIds == resource.data.participantIds &&
         request.resource.data.type == resource.data.type;
 
       allow delete: if isAdmin();
 
+      // ── Participants subcollection ─────────────────────────────────────────
       match /participants/{uid} {
-        allow read: if isConversationParticipant(conversationId) || isAdmin();
-        allow create: if isConversationParticipant(conversationId) || isAdmin();
+
+        // Read / create / update are allowed for anyone whose UID appears in the
+        // PARENT conversation's participantIds array.  This avoids the
+        // chicken-and-egg problem: when a new conversation is created the
+        // subcollection is empty, so existence checks would deny the first write.
+        allow read, create: if isSignedIn() && (
+          request.auth.uid in
+            get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds
+          || isAdmin()
+        );
+
         allow update: if isOwner(uid) || isAdmin();
         allow delete: if isAdmin();
       }
 
+      // ── Messages subcollection ────────────────────────────────────────────
       match /messages/{messageId} {
-        allow read: if isConversationParticipant(conversationId) || isAdmin();
-        allow create: if isConversationParticipant(conversationId) &&
+
+        allow read: if isSignedIn() && (
+          request.auth.uid in
+            get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds
+          || isAdmin()
+        );
+
+        allow create: if isSignedIn() &&
+          request.auth.uid in
+            get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds &&
           request.resource.data.senderId == request.auth.uid &&
           request.resource.data.text is string &&
           request.resource.data.text.size() > 0 &&
           request.resource.data.text.size() <= 4000 &&
           request.resource.data.status == "sent";
-        allow update: if isAdmin();
-        allow delete: if isAdmin();
+
+        allow update, delete: if isAdmin();
       }
     }
 
-    // Public phone → email index (only email stored, no sensitive data)
-    // Readable by anyone so login-by-phone works before authentication
+    // ── Phone index ───────────────────────────────────────────────────────────
+    // Public phone → email mapping (only email stored, no sensitive data).
+    // Readable by anyone so login-by-phone lookup works before authentication.
     match /phoneIndex/{phone} {
       allow read: if true;
       allow write: if isSignedIn() && request.resource.data.keys().hasOnly(['email']);
     }
 
+    // ── WebRTC signaling rooms ────────────────────────────────────────────────
+    // Each room corresponds to a conversation.
+    // Only authenticated users may read/write signaling data.
+    match /videoRooms/{conversationId} {
+      allow read, write: if isSignedIn();
+
+      match /callerCandidates/{candidateId} {
+        allow read, write: if isSignedIn();
+      }
+      match /calleeCandidates/{candidateId} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    // ── Moderation reports ────────────────────────────────────────────────────
     match /reports/{reportId} {
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.reporterUid);
+      allow read: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == resource.data.reporterUid);
       allow create: if isSignedIn() &&
         request.resource.data.reporterUid == request.auth.uid &&
         request.resource.data.state == "open";

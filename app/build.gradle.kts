@@ -25,11 +25,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Agora App ID (add agora.app.id=<YOUR_ID> to local.properties)
-        buildConfigField(
-            "String", "AGORA_APP_ID",
-            "\"${localProps.getProperty("agora.app.id", "")}\""
-        )
+        // (BuildConfig fields can be added here as needed)
     }
 
     buildTypes {
@@ -88,8 +84,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
-    // Agora Video SDK
-    implementation("io.agora.rtc:full-sdk:4.5.0")
+    // WebRTC – peer-to-peer video calls (follows Firebase WebRTC codelab approach)
+    implementation("io.getstream:stream-webrtc-android:1.3.8")
 
     // Tests
     testImplementation("junit:junit:4.13.2")

@@ -1,7 +1,6 @@
 package com.example.chat.presentation.videocall
 
 import android.Manifest
-import android.view.SurfaceView
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -40,63 +39,77 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.chat.R
+import org.webrtc.SurfaceViewRenderer
 
 private val videoCallPermissions = arrayOf(
     Manifest.permission.CAMERA,
     Manifest.permission.RECORD_AUDIO
 )
 
+/**
+ * Full-screen video call UI using WebRTC's [SurfaceViewRenderer].
+ *
+ * The composable owns the two renderer instances and passes them to the ViewModel
+ * via [onInitAndStart] once permissions are granted.  Renderers are released inside
+ * [DisposableEffect] when the composable leaves composition.
+ */
 @Composable
 fun VideoCallScreen(
-    channelId: String,
     uiState: VideoCallUiState,
-    onInitAndJoin: () -> Unit,
-    onSetupLocalVideo: (SurfaceView) -> Unit,
-    onSetupRemoteVideo: (Int, SurfaceView) -> Unit,
+    onInitAndStart: (localRenderer: SurfaceViewRenderer, remoteRenderer: SurfaceViewRenderer) -> Unit,
     onToggleAudio: () -> Unit,
     onToggleVideo: () -> Unit,
     onLeaveCall: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
+
+    // Create renderers once; release them on disposal.
+    val localRenderer = remember { SurfaceViewRenderer(context) }
+    val remoteRenderer = remember { SurfaceViewRenderer(context) }
+
     val permissionsGranted = remember { mutableStateOf(false) }
 
-    // Request camera + microphone permissions
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
         permissionsGranted.value = results.values.all { it }
-        if (permissionsGranted.value) onInitAndJoin()
     }
 
+    // Request permissions on first composition.
     LaunchedEffect(Unit) {
         permissionLauncher.launch(videoCallPermissions)
     }
 
-    // Leave channel and navigate back when leaving composition
+    // Once permissions are granted, initialise WebRTC and start the call.
+    LaunchedEffect(permissionsGranted.value) {
+        if (permissionsGranted.value) {
+            onInitAndStart(localRenderer, remoteRenderer)
+        }
+    }
+
+    // Release renderers BEFORE closing the WebRTC manager (which destroys the EGL context).
     DisposableEffect(Unit) {
-        onDispose { onLeaveCall() }
+        onDispose {
+            runCatching { localRenderer.clearImage(); localRenderer.release() }
+            runCatching { remoteRenderer.clearImage(); remoteRenderer.release() }
+            onLeaveCall()
+        }
     }
 
-    // Setup remote video when a remote user joins
-    LaunchedEffect(uiState.remoteUserJoined, uiState.remoteUid) {
-        // Handled via AndroidView factory below
-    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-
-        // ─── Remote video (full screen) ─────────────────────────────────────
+        // ── Remote video (full screen) ────────────────────────────────────────
         if (uiState.remoteUserJoined) {
             AndroidView(
-                factory = { ctx ->
-                    SurfaceView(ctx).also { sv ->
-                        onSetupRemoteVideo(uiState.remoteUid, sv)
-                    }
-                },
+                factory = { remoteRenderer },
                 modifier = Modifier.fillMaxSize()
             )
         } else {
-            // Waiting placeholder
             Text(
                 text = if (uiState.isConnected)
                     stringResource(R.string.video_call_waiting)
@@ -108,7 +121,7 @@ fun VideoCallScreen(
             )
         }
 
-        // ─── Local video (picture-in-picture, top-right) ────────────────────
+        // ── Local video (picture-in-picture, top-right) ───────────────────────
         Surface(
             modifier = Modifier
                 .align(Alignment.TopEnd)
@@ -118,14 +131,12 @@ fun VideoCallScreen(
             color = Color.DarkGray
         ) {
             AndroidView(
-                factory = { ctx ->
-                    SurfaceView(ctx).also { sv -> onSetupLocalVideo(sv) }
-                },
+                factory = { localRenderer },
                 modifier = Modifier.fillMaxSize()
             )
         }
 
-        // ─── Error message ───────────────────────────────────────────────────
+        // ── Error banner ──────────────────────────────────────────────────────
         uiState.error?.let { err ->
             Text(
                 text = err,
@@ -137,7 +148,7 @@ fun VideoCallScreen(
             )
         }
 
-        // ─── Controls (bottom bar) ───────────────────────────────────────────
+        // ── Controls (bottom) ─────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -146,7 +157,7 @@ fun VideoCallScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Toggle microphone
+            // Microphone toggle
             IconButton(
                 onClick = onToggleAudio,
                 modifier = Modifier
@@ -154,11 +165,9 @@ fun VideoCallScreen(
                     .size(56.dp)
             ) {
                 Icon(
-                    imageVector = if (uiState.isAudioMuted) Icons.Default.MicOff
-                                  else Icons.Default.Mic,
+                    imageVector = if (uiState.isAudioMuted) Icons.Default.MicOff else Icons.Default.Mic,
                     contentDescription = stringResource(
-                        if (uiState.isAudioMuted) R.string.btn_unmute_audio
-                        else R.string.btn_mute_audio
+                        if (uiState.isAudioMuted) R.string.btn_unmute_audio else R.string.btn_mute_audio
                     ),
                     tint = Color.White
                 )
@@ -166,10 +175,7 @@ fun VideoCallScreen(
 
             // End call
             FloatingActionButton(
-                onClick = {
-                    onLeaveCall()
-                    onNavigateBack()
-                },
+                onClick = { onLeaveCall(); onNavigateBack() },
                 containerColor = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(68.dp)
             ) {
@@ -181,7 +187,7 @@ fun VideoCallScreen(
                 )
             }
 
-            // Toggle camera
+            // Camera toggle
             IconButton(
                 onClick = onToggleVideo,
                 modifier = Modifier
@@ -189,11 +195,9 @@ fun VideoCallScreen(
                     .size(56.dp)
             ) {
                 Icon(
-                    imageVector = if (uiState.isVideoMuted) Icons.Default.VideocamOff
-                                  else Icons.Default.Videocam,
+                    imageVector = if (uiState.isVideoMuted) Icons.Default.VideocamOff else Icons.Default.Videocam,
                     contentDescription = stringResource(
-                        if (uiState.isVideoMuted) R.string.btn_unmute_video
-                        else R.string.btn_mute_video
+                        if (uiState.isVideoMuted) R.string.btn_unmute_video else R.string.btn_mute_video
                     ),
                     tint = Color.White
                 )

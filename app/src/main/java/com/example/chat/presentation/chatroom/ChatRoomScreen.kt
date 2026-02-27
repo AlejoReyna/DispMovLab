@@ -71,7 +71,9 @@ fun ChatRoomScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.screen_conversations)) },
+                title = {
+                    Text(state.conversationTitle.ifBlank { stringResource(R.string.screen_conversations) })
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(

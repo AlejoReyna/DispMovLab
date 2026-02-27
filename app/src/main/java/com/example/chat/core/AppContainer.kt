@@ -2,6 +2,7 @@ package com.example.chat.core
 
 import com.example.chat.data.remote.FirebaseAuthDataSource
 import com.example.chat.data.remote.FirestoreChatDataSource
+import com.example.chat.data.remote.VideoCallSignalingDataSource
 import com.example.chat.data.repository.AuthRepositoryImpl
 import com.example.chat.data.repository.ChatRepositoryImpl
 import com.example.chat.domain.repository.AuthRepository
@@ -26,4 +27,9 @@ object AppContainer {
 
     val authRepository: AuthRepository by lazy { AuthRepositoryImpl(authDataSource) }
     val chatRepository: ChatRepository by lazy { ChatRepositoryImpl(chatDataSource) }
+
+    /** WebRTC signaling via Firestore — used by VideoCallViewModel. */
+    val videoCallSignalingDataSource: VideoCallSignalingDataSource by lazy {
+        VideoCallSignalingDataSource(firebaseAuth, firestore)
+    }
 }
